@@ -1,2 +1,8 @@
 .DS_Store
-data/
+*.jpg
+*.png
+.idea/
+*.h5
+*.npy
+__pycache__/
+

@@ -1,4 +1,4 @@
-from mycode import FolderInspector
+from mycode.FolderInspector import FolderInspector
 from sklearn.model_selection import train_test_split
 from keras.callbacks import ModelCheckpoint
 from keras import backend as K
@@ -11,6 +11,8 @@ from keras.utils import plot_model,to_categorical
 import numpy as np
 from sklearn.utils import shuffle
 from keras.applications.densenet import DenseNet121
+
+
 
 class MyData:
     def __init__(self, datapath = "./data"):
@@ -28,6 +30,12 @@ class MyData:
             img = img_to_array(raw_img)
             data[i] = img
         return data
+
+
+    def _image_array_one(self, file_path):
+        raw_img = load_img(file_path, target_size=(self.ROWS, self.COLS))
+        img = img_to_array(raw_img)
+        return img
 
 
     def _save(self, path, name, nparray):

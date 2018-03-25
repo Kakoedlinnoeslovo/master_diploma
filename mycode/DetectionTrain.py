@@ -31,12 +31,12 @@ K.tensorflow_backend._get_available_gpus()
 from os import listdir
 from os.path import isfile, join
 
-from mycode import MyData
+from mycode.MyData import MyData
 
 from sklearn.model_selection import train_test_split
 
 class Trainer:
-    def __init__(self, datapath):
+    def __init__(self, datapath = "./data/"):
         self.mydata = MyData(datapath)
         self.out_path = "./data/out/"
 
@@ -107,15 +107,35 @@ class Trainer:
         # tpr=tp/(tp+fn)
         confusion_matrix(validation_cat2, np.round(prediction_cat2))
 
+    def detect_one(self, image_path):
+        base_model = DenseNet121(input_shape=(256, 256, 3), include_top=False,
+                                 weights='imagenet')
+        top_model2 = self.define_top_model(base_model.output_shape[1:])
+        top_model2.load_weights(self.out_path + 'top_model_1024size256_densenet.h5')
+        model = Model(inputs=base_model.input, outputs=top_model2(base_model.output))
 
-def unit_test():
-    data_path = "./data/"
-    trainer = Trainer(data_path)
-    trainer.train_top_model(is_trained=True)
-    trainer.roc_auc_plot()
+        model.compile(optimizer=Adam(lr=0.00001), loss='categorical_crossentropy',
+                      metrics=['categorical_accuracy'])
+
+        img = self.mydata._image_array_one(image_path)
+        img = img.reshape((1, img.shape[0], img.shape[1], img.shape[2]))
+        y_pred = model.predict(img)
+        print(y_pred)
+
+
+def unit_test(is_train = True, is_predict_one = False):
+    if is_train:
+        data_path = "./data/"
+        trainer = Trainer(data_path)
+        trainer.train_top_model(is_trained=True)
+        trainer.roc_auc_plot()
+    if is_predict_one:
+        image_path = "./data/melanoma/0000.jpg"
+        trainer = Trainer()
+        trainer.detect_one(image_path)
 
 
 
 if __name__ == "__main__":
-    unit_test()
+    unit_test(is_train = False, is_predict_one=True)
 
