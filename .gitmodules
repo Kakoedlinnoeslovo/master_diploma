@@ -1,0 +1,3 @@
+[submodule "pipeline/ZF_UNET_224_Pretrained_Model"]
+	path = pipeline/ZF_UNET_224_Pretrained_Model
+	url = https://github.com/ZFTurbo/ZF_UNET_224_Pretrained_Model
