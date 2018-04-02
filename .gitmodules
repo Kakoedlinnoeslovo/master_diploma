@@ -1,6 +1,6 @@
 [submodule "pipeline/ZF_UNET_224_Pretrained_Model"]
-	path = pipeline/ZF_UNET_224_Pretrained_Model
+	path = pipeline/zf_unet
 	url = https://github.com/ZFTurbo/ZF_UNET_224_Pretrained_Model
 [submodule "pipeline/ISIC_melanoma"]
-        path = pipeline/ISIC_melanoma 
+        path = pipeline/isis_melanoma 
         url = https://github.com/yinniyu/ISIC_melanoma
