@@ -7,6 +7,9 @@ import os
 import glob
 from sklearn.utils import shuffle
 import keras
+import pickle
+import gc
+from keras.models import model_from_json
 
 keras.__version__
 #need current version of keras to run newer models
@@ -49,13 +52,34 @@ class Trainer:
         return top_model
 
 
-    def train_top_model(self, is_trained = False):
+    def train_top_model(self, is_train = False):
+        #self.mydata._train_base()
 
-        X_train, y_train, X_val, y_val, base_model = self.mydata._train_base()
+        f = open(self.out_path + "X_train.npy", 'rb')
+        X_train = np.load(self.out_path + "X_train.npy")
+
+        f = open(self.out_path +"y_train.npy", 'rb')
+        y_train = np.load(f)
+
+        f = open(self.out_path + "X_val_features.npy", 'rb')
+        X_val = np.load(f)
+
+        f = open(self.out_path + "y_val_features.npy", 'rb')
+        y_val = np.load(f)
+
+        # load json and create model
+        json_file = open(self.out_path + 'model.json', 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        loaded_model = model_from_json(loaded_model_json)
+        # load weights into new model
+        loaded_model.load_weights(self.out_path + "model.h5")
+        print("Loaded model from disk")
 
 
-        if not is_trained:
-            top_model = self.define_top_model(base_model.output_shape[1:])
+
+        if is_train:
+            top_model = self.define_top_model(loaded_model.output_shape[1:])
             top_model.compile(optimizer=Adam(lr=0.00001), loss='binary_crossentropy',
                               metrics=['binary_accuracy'])
 
@@ -96,7 +120,8 @@ class Trainer:
         from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, \
             accuracy_score, confusion_matrix
         print('AUC score: %f' % roc_auc_score(validation_cat2, prediction_cat2))
-        print('Accuracy score: %f' % accuracy_score(validation_cat2, np.round(prediction_cat2)))
+        print('Accuracy score: %f' % accuracy_score(validation_cat2,
+                                                    np.round(prediction_cat2)))
         print('F1 score: %f' % f1_score(validation_cat2, np.round(prediction_cat2)))
 
         fpr, tpr, _ = roc_curve(validation_cat2, prediction_cat2)
@@ -127,10 +152,15 @@ def unit_test(is_train = True, is_predict_one = False):
     if is_train:
         data_path = "./data/"
         trainer = Trainer(data_path)
-        trainer.train_top_model(is_trained=True)
-        trainer.roc_auc_plot()
+        trainer.train_top_model(is_train=is_train)
+        #trainer.roc_auc_plot()
     if is_predict_one:
-        image_path = "./data/melanoma/0000.jpg"
+        data_path = "./data/"
+        trainer = Trainer(data_path)
+        trainer.train_top_model(is_train=False)
+        trainer.roc_auc_plot()
+        image_path = "./data/benign_mask/2611.jpg"
+        #если меньше 0.5 - то меланома, если больше то - нет
         trainer = Trainer()
         trainer.detect_one(image_path)
 

@@ -11,6 +11,8 @@ from keras.utils import plot_model,to_categorical
 import numpy as np
 from sklearn.utils import shuffle
 from keras.applications.densenet import DenseNet121
+from tqdm import tqdm
+import gc
 
 
 
@@ -25,8 +27,9 @@ class MyData:
 
     def _image_array(self, file_path, files_list,  count):
         data = np.ndarray((count, self.ROWS, self.COLS, 3))
-        for i, image_file in enumerate(files_list):
-            raw_img = load_img(file_path + image_file, target_size=(self.ROWS, self.COLS))
+        print("Start reading your data from {} and make array ...".format(file_path))
+        for i, image_file in tqdm(enumerate(files_list)):
+            raw_img = load_img(file_path + image_file, target_size = (self.ROWS, self.COLS))
             img = img_to_array(raw_img)
             data[i] = img
         return data
@@ -50,8 +53,8 @@ class MyData:
 
     def _prepare_train_validate(self):
         #todo split to test/train and reshape to 256 to 256
-        benign_fldr = self.path + "benign/"
-        melanoma_fldr = self.path + "melanoma/"
+        benign_fldr = self.path + "benign_mask/"
+        melanoma_fldr = self.path + "melanoma_mask/"
 
         benign_files = self.insp.get_files(benign_fldr)
         melanoma_files = self.insp.get_files(melanoma_fldr)
@@ -59,37 +62,65 @@ class MyData:
 
         benign_array = self._image_array(benign_fldr, benign_files[:self.batch], len(benign_files[:self.batch]))
         melanoma_array = self._image_array(melanoma_fldr, melanoma_files[:self.batch],  len(melanoma_files[:self.batch]))
+        print('End reading your data ...')
 
         benign_train, benign_test, benign_eval = self._split_ttstval(benign_array)
         melanoma_train, melanoma_test, melanoma_eval = self._split_ttstval(melanoma_array)
+
+        del benign_array, melanoma_array
+        gc.collect()
 
         return [benign_train, benign_test, benign_eval,
                 melanoma_train, melanoma_test, melanoma_eval]
 
     def _train_base(self):
+        print('Start preparing your data ...')
         list_array = self._prepare_train_validate()
+
+
+        # for i, element in tqdm(enumerate(list_array)):
+        #     self._save(self.out_path + "temp_path/", "element{}.pkl".format(i), element)
+
+
+        #del list_array
+        gc.collect()
+        #list_array = list()
+        # for
+        # with open(self.out_path + "all_list.pkl", 'rb') as f:
+        #     list_array = pickle.load(f)
+
         X_train = np.concatenate((list_array[0], list_array[3]), axis=0)
         len_first_part = len(list_array[0])
         len_sec_part = len(list_array[3])
-        y_train = np.concatenate((np.ones((len_first_part,)), np.zeros((len_sec_part, ))), axis = 0)
+        y_train = np.concatenate((np.ones((len_first_part,)),
+                                  np.zeros((len_sec_part, ))),
+                                  axis = 0)
 
         X_test = np.concatenate((list_array[1], list_array[4]), axis=0)
         len_first_part = len(list_array[1])
         len_sec_part = len(list_array[4])
-        y_test = np.concatenate((np.ones((len_first_part,)), np.zeros((len_sec_part,))), axis=0)
+        y_test = np.concatenate((np.ones((len_first_part,)),
+                                 np.zeros((len_sec_part,))),
+                                axis=0)
 
         X_val = np.concatenate((list_array[2], list_array[5]), axis=0)
         len_first_part = len(list_array[2])
         len_sec_part = len(list_array[5])
-        y_val = np.concatenate((np.ones((len_first_part,)), np.zeros((len_sec_part,))), axis=0)
+        y_val = np.concatenate((np.ones((len_first_part,)),
+                                np.zeros((len_sec_part,))),
+                               axis=0)
 
 
         train_preprocessed = preprocess_input(X_train)
         validation_preprocessed = preprocess_input(X_val)
         test_preprocessed = preprocess_input(X_test)
 
+        print('Start training net ...')
 
-        base_model = DenseNet121(input_shape=(256, 256, 3), include_top=False, weights='imagenet')
+
+        base_model = DenseNet121(input_shape=(256, 256, 3),
+                                 include_top=False,
+                                 weights='imagenet')
 
         ### Train Bottlenecks
 
@@ -115,5 +146,23 @@ class MyData:
         self._save(self.out_path, "y_val_features", y_val_features)
         self._save(self.out_path, "y_val", y_val)
 
-        return X_train_features, y_train, X_val_features, y_val_features, base_model
+        del X_train_features, y_train, X_val_features, X_val, y_val_features, y_val
+
+
+        #model_weights = base_model.get_weights()
+        #model_architecture = base_model.to_json()
+        #model_dict = {'model_weights': model_weights, 'model_architecture': model_architecture}
+
+        # serialize model to JSON
+        model_json = base_model.to_json()
+        with open(self.out_path + "model.json", "w") as json_file:
+            json_file.write(model_json)
+        # serialize weights to HDF5
+        base_model.save_weights(self.out_path + "model.h5")
+        print("Saved model to disk")
+
+        #with open(self.out_path + 'base_model.pickle', 'wb') as handle:
+        #    pickle.dump(model_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        del base_model
+        gc.collect()
 
