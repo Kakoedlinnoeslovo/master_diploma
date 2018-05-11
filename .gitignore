@@ -5,4 +5,4 @@
 *.h5
 *.npy
 __pycache__/
-
+data/
