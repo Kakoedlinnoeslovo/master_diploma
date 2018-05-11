@@ -37,7 +37,8 @@ class DenseNetwork:
 
     def _eval_base_model(self):
 
-        is_done = self.check([self.my_data.out_mpath_mask, self.my_data.out_bpath_mask], format='jpg')
+        is_done = self.check([self.my_data.out_mpath_mask,
+                              self.my_data.out_bpath_mask], format='jpg')
         if is_done is True:
             print("The files already exists")
             return
@@ -107,6 +108,7 @@ class DenseNetwork:
         self.top_model.fit(X_train, y_train, batch_size=32,
                       epochs=50, verbose=1, shuffle=True,
                       validation_data=(X_val, y_val))
+        self.my_data.viewer.create_dir(self.out_path_weights)
         self.top_model.save_weights(self.out_path_weights + 'top_model.h5')
 
 
