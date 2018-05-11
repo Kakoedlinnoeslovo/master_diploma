@@ -1,7 +1,7 @@
 
 # # Training densenet bottleneck for 3 class classification: benign, melanoma,and seborrheic keratosis
 # dataset is divided from total images
-import pandas as pd
+#import pandas as pd
 import numpy as np
 import os
 import glob
@@ -10,6 +10,7 @@ import keras
 import pickle
 import gc
 from keras.models import model_from_json
+import matplotlib.pyplot as plt
 
 keras.__version__
 #need current version of keras to run newer models
@@ -53,7 +54,8 @@ class Trainer:
 
 
     def train_top_model(self, is_train = False):
-        #self.mydata._train_base()
+        if is_train:
+            self.mydata._train_base()
 
         f = open(self.out_path + "X_train.npy", 'rb')
         X_train = np.load(self.out_path + "X_train.npy")
@@ -118,19 +120,41 @@ class Trainer:
         prediction_cat2 = prediction
 
         from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, \
-            accuracy_score, confusion_matrix
+            accuracy_score, confusion_matrix, precision_score, recall_score, \
+	        precision_score
+
+        print(validation_cat2[:10], prediction_cat2[:10])
         print('AUC score: %f' % roc_auc_score(validation_cat2, prediction_cat2))
         print('Accuracy score: %f' % accuracy_score(validation_cat2,
                                                     np.round(prediction_cat2)))
+        print('Precision score: %f' % precision_score(validation_cat2, np.round(prediction_cat2)))
+        print('Recall score: %f' % recall_score(validation_cat2, np.round(prediction_cat2)))
         print('F1 score: %f' % f1_score(validation_cat2, np.round(prediction_cat2)))
 
         fpr, tpr, _ = roc_curve(validation_cat2, prediction_cat2)
+
+        roc_auc = auc(fpr, tpr)
+        plt.figure()
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange',
+                 lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
+        plt.show()
+
+
+
 
         # the count of true negatives is C_{0,0}, false negatives is C_{1,0},
         # true positives is C_{1,1} and false positives is C_{0,1}.
         # fpr=fp/(fp+tn)
         # tpr=tp/(tp+fn)
-        confusion_matrix(validation_cat2, np.round(prediction_cat2))
+        #confusion_matrix(validation_cat2, np.round(prediction_cat2))
 
     def detect_one(self, image_path):
         base_model = DenseNet121(input_shape=(256, 256, 3), include_top=False,
@@ -148,7 +172,7 @@ class Trainer:
         print(y_pred)
 
 
-def unit_test(is_train = True, is_predict_one = False):
+def unit_test(is_train = False, is_predict_one = False):
     if is_train:
         data_path = "./data/"
         trainer = Trainer(data_path)
@@ -159,7 +183,7 @@ def unit_test(is_train = True, is_predict_one = False):
         trainer = Trainer(data_path)
         trainer.train_top_model(is_train=False)
         trainer.roc_auc_plot()
-        image_path = "./data/benign_mask/2611.jpg"
+        image_path = "./data/melanoma_mask/0000.jpg"
         #если меньше 0.5 - то меланома, если больше то - нет
         trainer = Trainer()
         trainer.detect_one(image_path)

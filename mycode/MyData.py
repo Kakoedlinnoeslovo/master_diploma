@@ -22,7 +22,7 @@ class MyData:
         self.insp = FolderInspector()
         self.ROWS =256
         self.COLS = 256
-        self.batch = 100 #if -1, this mean all data
+        self.batch = -1 #if -1, this mean all data
         self.out_path = "./data/out/"
 
     def _image_array(self, file_path, files_list,  count):
@@ -74,6 +74,7 @@ class MyData:
                 melanoma_train, melanoma_test, melanoma_eval]
 
     def _train_base(self):
+
         print('Start preparing your data ...')
         list_array = self._prepare_train_validate()
 
