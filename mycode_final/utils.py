@@ -4,6 +4,7 @@ from os import listdir
 from os.path import isfile, join
 import os
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 
@@ -40,6 +41,34 @@ class FolderViewer:
             os.makedirs(path)
 
 
+def _run_segmentation(folder_name = "melanoma"):
+    viewer = FolderViewer()
+    in_mpath = "../data/melanoma/"
+    out_mpath_mask = "../data/out/test/melanoma_mask/"
+    in_bpath = "../data/benign/"
+    out_bpath_mask = "../data/out/test/benign_mask/"
+
+    if folder_name == "melanoma":
+        files = viewer.get_files(in_mpath, format='jpg')
+        temp_outpath = out_mpath_mask
+        temp_inpath = in_mpath
+
+    elif folder_name == "benign":
+        files = viewer.get_files(in_bpath, format='jpg')
+        temp_outpath = out_bpath_mask
+        temp_inpath = in_bpath
+    else:
+        print("folder_name should be melanoma or benign")
+        return
+
+    viewer.create_dir(temp_outpath)
+    for i, file in enumerate(tqdm(files)):
+        mask = get_mask(temp_inpath + file)
+        temp_path = temp_outpath + file
+        if i % 100 == 0:
+            print('\n' + temp_path)
+        cv2.imwrite(temp_path, mask)
+
 def unit_test():
     path = "../data/benign/0000.jpg"
     img = get_mask(path)
@@ -48,4 +77,5 @@ def unit_test():
     cv2.imwrite("../data/test/0000.jpg", img)
 
 if __name__ == "__main__":
-    unit_test()
+    #unit_test()
+    _run_segmentation('melanoma')

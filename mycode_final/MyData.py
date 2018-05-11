@@ -31,15 +31,17 @@ class MyData:
         if folder_name == "melanoma":
             files = self.viewer.get_files(self.in_mpath, format='jpg')
             temp_outpath = self.out_mpath_mask
+            temp_inpath = self.in_mpath
         elif folder_name == "benign":
             files = self.viewer.get_files(self.in_bpath, format='jpg')
             temp_outpath = self.out_bpath_mask
+            temp_inpath = self.in_bpath
         else:
             print("folder_name should be melanoma or benign")
             return
         self.viewer.create_dir(temp_outpath)
         for i, file in enumerate(tqdm(files)):
-            mask = get_mask(folder_name + file)
+            mask = get_mask(temp_inpath + file)
             temp_path = temp_outpath + file
             if i % 100 == 0:
                 print('\n' + temp_path)
