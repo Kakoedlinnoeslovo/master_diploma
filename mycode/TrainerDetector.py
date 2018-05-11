@@ -153,8 +153,6 @@ class DenseNetwork:
         fpr, tpr, _ = roc_curve(y_test, prediction)
 
 
-
-
 if __name__ == "__main__":
     base_model = DenseNet121(input_shape=(256, 256, 3),
                              include_top=False,
