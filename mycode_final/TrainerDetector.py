@@ -24,21 +24,20 @@ class DenseNetwork:
         self.init = False
         self.lr = 0.00001
 
-    def check(self, path_list):
+    def check(self, path_list, format):
         self.my_data.viewer.create_dir(path_list[0])
         self.my_data.viewer.create_dir(path_list[1])
-        melanoma_list = self.my_data.viewer.get_files(path_list[0])
-        benign_list = self.my_data.viewer.get_files(path_list[1])
+        melanoma_list = self.my_data.viewer.get_files(path_list[0], format = format)
+        benign_list = self.my_data.viewer.get_files(path_list[1], format = format)
         if len(melanoma_list) != 0 and len(benign_list) != 0:
-            is_done = True
-            return is_done
+            return True
         else:
             return False
 
 
     def _eval_base_model(self):
 
-        is_done = self.check([self.my_data.out_mpath_mask, self.my_data.out_bpath_mask])
+        is_done = self.check([self.my_data.out_mpath_mask, self.my_data.out_bpath_mask], format='jpg')
         if is_done is True:
             print("The files already exists")
             return
@@ -48,7 +47,9 @@ class DenseNetwork:
 
 
     def get_embeddings(self, name = "melanoma", test_size = 0.2, train_size = 0.2):
-        is_done = self.check([self.my_data.out_mpath_emb , self.my_data.out_bpath_emb ])
+        is_done = self.check([self.my_data.out_mpath_emb ,
+                              self.my_data.out_bpath_emb ],
+                             format='npy')
         if is_done is False:
             self.my_data._prepare_train_validate(self.base_model,
                                                  test_size=test_size,
@@ -73,7 +74,7 @@ class DenseNetwork:
 
     def prepare_data(self, data):
         print(data[0].shape)
-        X_train = np.concatenate((data[0], data[1]), axis=1)
+        X_train = np.concatenate((data[0], data[1]), axis=0)
         len_first_part = len(data[0])
         len_sec_part = len(data[1])
         y_train = np.concatenate((np.ones((len_first_part,)),
@@ -81,6 +82,7 @@ class DenseNetwork:
                                  axis=0)
         X_train, y_train = shuffle(X_train, y_train, random_state=10)
         return X_train, y_train
+
 
     def build_topmodel(self, input_dim):
         top_model = Sequential()
@@ -146,7 +148,7 @@ class DenseNetwork:
                                                     np.round(prediction)))
         print('F1 score: %f' % f1_score(y_test, np.round(prediction)))
         fpr, tpr, _ = roc_curve(y_test, prediction)
-        
+
 
 
 
