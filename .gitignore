@@ -6,5 +6,8 @@
 *.npy
 __pycache__/
 data/
+<<<<<<< HEAD
 pipeline/
 *.pkl
+=======
+>>>>>>> b03bcb8b4b94ac598f78012d4b7a09d70781e2d3
