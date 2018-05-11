@@ -21,18 +21,18 @@ class MyData:
         self.out_bpath_mask  = out + 'benign_mask/'
 
         self.out_mpath_emb = out + 'melanoma_embeddings/'
-        self.out_bpath_emb = out + "benign_embeddings"
+        self.out_bpath_emb = out + "benign_embeddings/"
 
         self.emb_name_list = ['train_emb.npy', 'test_emb.npy', 'val_emb.npy']
-
+        self.cols, self.rows, self.channels = 256, 256, 3
 
 
     def _run_segmentation(self, folder_name = "melanoma"):
         if folder_name == "melanoma":
-            files = self.viewer.get_files(self.in_mpath)
+            files = self.viewer.get_files(self.in_mpath, format='jpg')
             temp_outpath = self.out_mpath_mask
         elif folder_name == "benign":
-            files = self.viewer.get_files(self.in_bpath)
+            files = self.viewer.get_files(self.in_bpath, format='jpg')
             temp_outpath = self.out_bpath_mask
         else:
             print("folder_name should be melanoma or benign")
@@ -47,15 +47,14 @@ class MyData:
 
 
     def _prepare_train_validate(self, base_model, test_size = 0.2, val_size = 0.2):
-        benign_fldr = self.out_mpath_mask
+        benign_fldr = self.out_bpath_mask
         melanoma_fldr = self.out_mpath_mask
-        benign_files = self.viewer.get_files(benign_fldr)
-        melanoma_files = self.viewer.get_files(melanoma_fldr)
-        cols, rows, channels = 256, 256, 3
+        benign_files = self.viewer.get_files(benign_fldr, format='jpg')
+        melanoma_files = self.viewer.get_files(melanoma_fldr, format='jpg')
 
         def image_array(file_path, files_list, quanity, rows, cols, channels):
             data = np.ndarray((quanity, rows, cols, channels))
-            print("\nStart reading your data from {} and make array ...".format(file_path))
+            print("\nStart reading your data from {} and making array ...".format(file_path))
             for i, image_file in tqdm(enumerate(files_list)):
                 raw_img = load_img(file_path + image_file, target_size=(rows, cols))
                 img = img_to_array(raw_img)
@@ -84,19 +83,19 @@ class MyData:
             #save files
             nparray_list = [train_emb, test_emb, val_emb]
             viewer.create_dir(out_emb)
-            assert(len(nparray_list) == len(name_list),
-                   'len(nparray_list) should equal to len(name_list)' )
+            # assert(len(nparray_list) == len(name_list),
+            #        'len(nparray_list) should equal to len(name_list)' )
             for nparray, name in zip(nparray_list, name_list):
                 save(out_emb, name, nparray)
 
 
         benign_array = image_array(benign_fldr, benign_files,
                                    len(benign_files),
-                                   rows, cols, channels)
+                                   self.rows, self.cols, self.channels)
 
         melanoma_array = image_array(melanoma_fldr, melanoma_files,
                                      len(melanoma_files),
-                                     rows, cols, channels)
+                                     self.rows, self.cols, self.channels)
         print('\nEnd reading your data ...')
         benign_train, benign_test, benign_val = split_train_test(benign_array,
                                                                  test_size,

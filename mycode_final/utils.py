@@ -3,6 +3,7 @@ import numpy as np
 from os import listdir
 from os.path import isfile, join
 import os
+import matplotlib.pyplot as plt
 
 
 
@@ -29,11 +30,22 @@ class FolderViewer:
         return os.listdir(path)
 
 
-    def get_files(self, path):
-        onlyfiles = [f for f in listdir(path) if (isfile(join(path, f)))]
+    def get_files(self, path, format = 'jpg'):
+        onlyfiles = [f for f in listdir(path) if (isfile(join(path, f))) and f.split('.')[-1] == format]
         return onlyfiles
 
 
     def create_dir(self, path):
         if not os.path.exists(path):
             os.makedirs(path)
+
+
+def unit_test():
+    path = "../data/benign/0000.jpg"
+    img = get_mask(path)
+    plt.imshow(img)
+    plt.show()
+    cv2.imwrite("../data/test/0000.jpg", img)
+
+if __name__ == "__main__":
+    unit_test()
