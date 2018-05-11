@@ -10,6 +10,7 @@ from sklearn.utils import shuffle
 from keras.models import Model
 from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, \
             accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
 
 from MyData import MyData
 from utils import get_mask
@@ -138,19 +139,19 @@ class DenseNetwork:
         self.top_model = self.build_topmodel(self.base_model.output_shape[1:])
         self.top_model.load_weights(self.out_path_weights + 'top_model.h5')
 
-        model = Model(inputs=self.base_model.input,
-                      outputs=self.top_model(self.base_model.output))
-        model.compile(optimizer=Adam(lr=self.lr), loss='categorical_crossentropy',
+        self.top_model.compile(optimizer=Adam(lr=self.lr), loss='categorical_crossentropy',
                       metrics=['categorical_accuracy'])
 
         ben_embs, mel_embs = self.get_embeddings("benign"), self.get_embeddings("melanoma")
         X_test, y_test = self.prepare_data([ben_embs[1], mel_embs[1]])
-        prediction = model.predict(X_test, verbose=1)
+        prediction = self.top_model.predict(X_test, verbose=1)
         print('AUC score: %f' % roc_auc_score(y_test, prediction))
         print('Accuracy score: %f' % accuracy_score(y_test,
                                                     np.round(prediction)))
         print('F1 score: %f' % f1_score(y_test, np.round(prediction)))
         fpr, tpr, _ = roc_curve(y_test, prediction)
+        plt.plot(fpr, tpr)
+        plt.show()
 
 
 
@@ -161,5 +162,6 @@ if __name__ == "__main__":
                              weights='imagenet')
 
     trainer = DenseNetwork(base_model= base_model, path="../data/", time_to_live=1527638400)
-    trainer._eval_base_model()
-    trainer.fit()
+    #trainer._eval_base_model()
+    #trainer.fit()
+    trainer.plot_metrics()
