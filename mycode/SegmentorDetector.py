@@ -7,6 +7,10 @@ from keras.models import Model
 from keras import optimizers
 from keras.applications.densenet import DenseNet121
 from keras import losses
+import numpy as np
+from tqdm import tqdm
+import cv2
+from sklearn.model_selection import train_test_split
 
 class SegmentorDetector(DenseNetwork):
     def __init__(self, base_model, path = "../data", time_to_live = 1527638400):
@@ -46,9 +50,44 @@ class SegmentorDetector(DenseNetwork):
         model = Model(inputs=snet.input,
                       outputs=self.top_model(self.base_model(snet.output)),
                       name = "SegmentorDetector")
-        model.compile(optimizers.Adam(lr = 0.0001),
-                      loss=losses.binary_crossentropy)
+        return model
+
+    def read_data(self, folder_name = "melanoma"):
+        if folder_name == "melanoma":
+            files = self.my_data.viewer.get_files(self.my_data.in_mpath, format='jpg')
+            temp_inpath = self.my_data.in_mpath
+        elif folder_name == "benign":
+            files = self.my_data.viewer.get_files(self.my_data.in_bpath, format='jpg')
+            temp_inpath = self.my_data.in_bpath
+        else:
+            print("folder_name should be melanoma or benign")
+            return
+        data = np.zeros((len(files), self.my_data.rows, self.my_data.cols, 3))
+        for i, file in enumerate(tqdm(files)):
+            image = cv2.imread(temp_inpath + file)
+            data[i] = image
+        return data
+
+
+
+    def fit(self, lr = 0.0001):
+        benign_data = self.read_data("benign")
+        melanoma_data = self.read_data("melanoma")
+        X, y = self.prepare_data([benign_data, melanoma_data])
+        X_train, X_val, y_train, y_val = train_test_split(X, y,
+                                                          test_size=0.1,
+                                                          random_state=42)
+
+        model = self.build_full_model()
+        model.compile(optimizers.Adam(lr = lr),
+                      loss=losses.binary_crossentropy,
+                      metrics=['binary_accuracy'])
         model.summary()
+        model.fit(X_train, y_train, batch_size=32,
+                      epochs=50, verbose=1, shuffle=True,
+                      validation_data=(X_val, y_val))
+        self.my_data.viewer.create_dir(self.out_path_weights)
+        self.top_model.save_weights(self.out_path_weights + 'top_model_seg.h5')
 
 
 def unit_test():
@@ -56,7 +95,8 @@ def unit_test():
                              include_top=False,
                              weights='imagenet')
     detector = SegmentorDetector(base_model)
-    detector.build_full_model()
+    detector.fit()
+
 
 if __name__ == "__main__":
     unit_test()
