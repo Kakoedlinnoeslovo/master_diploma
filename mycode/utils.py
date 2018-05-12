@@ -5,6 +5,9 @@ from os.path import isfile, join
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from keras.layers import Conv2D
+from keras.layers import Activation, BatchNormalization, SpatialDropout2D
+import keras.backend as K
 
 
 
@@ -26,15 +29,12 @@ class FolderViewer:
     def __init__(self):
         pass
 
-
     def get_folder_list(self, path):
         return os.listdir(path)
-
 
     def get_files(self, path, format = 'jpg'):
         onlyfiles = [f for f in listdir(path) if (isfile(join(path, f))) and f.split('.')[-1] == format]
         return onlyfiles
-
 
     def create_dir(self, path):
         if not os.path.exists(path):
@@ -68,6 +68,52 @@ def _run_segmentation(folder_name = "melanoma"):
         if i % 100 == 0:
             print('\n' + temp_path)
         cv2.imwrite(temp_path, mask)
+
+
+def double_conv_layer(x, size, dropout, batch_norm):
+    if K.image_dim_ordering() == 'th':
+        axis = 1
+    else:
+        axis = 3
+    conv = Conv2D(size, (3, 3), padding='same')(x)
+    if batch_norm is True:
+        conv = BatchNormalization(axis=axis)(conv)
+    conv = Activation('relu')(conv)
+    conv = Conv2D(size, (3, 3), padding='same')(conv)
+    if batch_norm is True:
+        conv = BatchNormalization(axis=axis)(conv)
+    conv = Activation('relu')(conv)
+    if dropout > 0:
+        conv = SpatialDropout2D(dropout)(conv)
+    return conv
+
+def preprocess_batch(batch):
+    batch /= 256
+    batch -= 0.5
+    return batch
+
+
+def dice_coef(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2.0 * intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1.0)
+
+
+def jacard_coef(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (intersection + 1.0) / (K.sum(y_true_f) + K.sum(y_pred_f) - intersection + 1.0)
+
+
+def jacard_coef_loss(y_true, y_pred):
+    return -jacard_coef(y_true, y_pred)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
+
 
 def unit_test():
     path = "../data/benign/0000.jpg"

@@ -101,6 +101,7 @@ class DenseNetwork:
         self.top_model = self.build_topmodel(self.base_model.output_shape[1:])
         ben_embs, mel_embs = self.get_embeddings("benign"), self.get_embeddings("melanoma")
         #todo тренить один к одному, потом сдвигать
+        #todo добавить аугментацию
         X_train, y_train = self.prepare_data([ben_embs[0], mel_embs[0]])
         X_val, y_val = self.prepare_data([ben_embs[2], mel_embs[2]])
 
