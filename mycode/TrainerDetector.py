@@ -25,6 +25,7 @@ class DenseNetwork:
         self.init = False
         self.lr = 0.00001
 
+
     def check(self, path_list, format):
         self.my_data.viewer.create_dir(path_list[0])
         self.my_data.viewer.create_dir(path_list[1])
