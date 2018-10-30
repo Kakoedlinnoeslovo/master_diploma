@@ -7,7 +7,7 @@ import time
 #from initModel import initModel
 #from pyaspeller import Word
 
-from Custmodel import defandrun
+from .Custmodel import defandrun
 
 class myApp:
 	def __init__(self, staticfolder, workdir):

@@ -1,5 +1,4 @@
 import cv2
-from tqdm import tqdm
 from time import time
 from keras.models import Sequential
 from keras.layers import Flatten, Dropout, Dense
@@ -12,8 +11,8 @@ from sklearn.metrics import roc_auc_score, f1_score, roc_curve, auc, \
             accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 
-from MyData import MyData
-from utils import get_mask
+from .MyData import MyData
+from .utils import get_mask
 
 class DenseNetwork:
     def __init__(self, base_model, path = "../data/", time_to_live = 1527638400):

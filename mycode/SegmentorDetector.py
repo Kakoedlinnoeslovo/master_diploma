@@ -1,5 +1,5 @@
-from TrainerDetector import DenseNetwork
-from utils import double_conv_layer, dice_coef_loss
+from .TrainerDetector import DenseNetwork
+from .utils import double_conv_layer
 
 from keras.layers import Input, MaxPooling2D, UpSampling2D, Conv2D, Activation
 from keras.layers.merge import concatenate
@@ -14,6 +14,9 @@ from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import img_to_array, load_img
 import matplotlib.pyplot as plt
 from keras.callbacks import ModelCheckpoint
+from sklearn.metrics import roc_auc_score, accuracy_score, f1_score, roc_curve
+from keras.optimizers import Adam
+
 
 
 class SegmentorDetector(DenseNetwork):
