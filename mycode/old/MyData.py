@@ -70,6 +70,7 @@ class MyData:
                                                     test_size=val_size, random_state=1)
             return X_train, X_test, X_val
 
+
         def prepare_embeddings(base_model, viewer, train, test, val, out_emb, name_list):
             def save(path, name, nparray):
                 np.save(path + name, nparray)
